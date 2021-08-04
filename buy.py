@@ -39,16 +39,17 @@ feature_list=[]
 desc_list=[]
 rent_urls_list=[]
 rent_url_list=[]
-############################################ code for buy ####################################################################################################
-driver = webdriver.Chrome('/home/yuchen/workspace/code/chromedriver')
 
+############################################ code for buy ##############################################
+driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
 
 try:
     driver.close()
 except:
     pass
+
 try:    
-    df=pd.read_csv('/home/yuchen/workspace/Accounts.csv')
+    df=pd.read_csv('/home/hp/workspace/shubham/kenlvin/Accounts.csv')
     urls=df['Agent url'].dropna().tolist()
     emails=df['Email login'].dropna().tolist()
     passwords=df['Password'].dropna().tolist()
@@ -58,92 +59,113 @@ try:
     def buy_property():
         res = driver.page_source
         soup = BeautifulSoup(res, 'html.parser')
-        col=soup.find('div',{'class':'listing-widget-new small-listing-card','id':'listings-container'})
-        images=col.find_all('a',{'class':'nav-link'})
+        try:
+            data = soup.find('div', {'class': 'carousel-container'})
+            cards = data.find_all('a', {'class': 'listing-card-link'})
+            for card in cards:
+                link = card.get('href')
+                url_list.append(link)
+            print("Property List :", url_list)
+        except:
+            pass
+        # col = soup.find('div',{'class':'listing-widget-new small-listing-card','id':'listings-container'})
+        # images = col.find_all('a',{'class':'nav-link'})
        
-        for img in images:
-            h=img.get('href')
-            if  "https://www.propertyguru.com.sg/" not in h:
-                    urls_list.append("https://www.propertyguru.com.sg/"+h)
-            for x in urls_list:
-                if x not in url_list:
-                    if "#contact-agent" not in x:
-                                    url_list.append(x)
+        # for img in images:
+        #     h = img.get('href')
+        #     if  "https://www.propertyguru.com.sg/" not in h:
+        #             urls_list.append("https://www.propertyguru.com.sg/"+h)
+        #     for x in urls_list:
+        #         if x not in url_list:
+        #             if "#contact-agent" not in x:
+        #                             url_list.append(x)
 
-    for i in range(0,len(urls)):
-        agent_url=(urls[i])
-        email=emails[i]
-        password=passwords[i]
-        driver = webdriver.Chrome('/home/yuchen/workspace/code/chromedriver')
-
+    for i in range(0, len(urls)):
+        agent_url = (urls[i])
+        email = emails[i]
+        password = passwords[i]
+        driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
 
         driver.get(agent_url)
         driver.delete_all_cookies()              
         driver.maximize_window()
+
+        try:
+            WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[2]/div/div/div[2]/div/button'))).click()
+        except:
+            pass
    
         try:
-            element =WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="agent-listings"]/div[1]/div[1]/div/a[1]'))).click()
-
+            WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div/button[1]'))).click()
             driver.delete_all_cookies()    
             buy_property()
         except:
-            pass    
-
-        try:
-            element =WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[5]/div/div/section/div[8]/div[3]/ul/li[4]/a'))).click()
             buy_property()
-        except:
-            pass
+    
+
+        # try:
+        #     WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[5]/div/div/section/div[8]/div[3]/ul/li[4]/a'))).click()
+        #     buy_property()
+        # except:
+        #     pass
 
         ################################################################################################################          
         driver.delete_all_cookies()              
 
 
         for i in range(0,len(url_list)):        
+        # for i in range(0,1):        
             driver.delete_all_cookies()
-            u=(url_list[i])
+            u = (url_list[i])
             if "commercialguru.com.sg" in u:
 
-                s=u.replace('https://www.propertyguru.com.sg/','')
+                s = u.replace('https://www.propertyguru.com.sg/','')
                 driver.get(s)
-                print(s)
+                # print(s)
                 driver.delete_all_cookies()  
                
                
             else:  
                 driver.get(u)
-                driver.delete_all_cookies()  
+                driver.delete_all_cookies() 
             res = driver.page_source
             soup = BeautifulSoup(res, 'html.parser')
            
        
-            address=soup.find('div',{'class':'listing-address'})
-            postalCode=address.find('span',{'itemprop':'postalCode'}).text
+            address = soup.find('div', {'class': 'listing-address'})
+            postalCode = address.find('span',{'itemprop': 'postalCode'}).text
 
-            name=soup.find('div',{"class":"listing-title text-transform-none"})
+            name = soup.find('div', {'class': 'listing-title text-transform-none'})
             print(name.text)
             name_list.append(name)
        
-            price=soup.find('span',{'class':"element-label price"})
-            price_list.append(price)
-            no_of_bedroom=soup.find('div',{'class':'property-info-element beds'})
-            try:
-                no_of_bedrooms=no_of_bedroom.find('span',{'class':'element-label'})
-            except:
-                no_of_bedrooms="no"
+            price = soup.find('span', {'class': 'element-label price'})
 
-            no_of_bathroom=soup.find('div',{'class':'property-info-element baths'})
+            price_list.append(price)
+
+            no_of_bedroom = soup.find('div',{'class':'property-info-element beds'})
             try:
-                no_of_bathrooms=no_of_bathroom.find('span',{'class':'element-label'})
+                no_of_bedrooms = no_of_bedroom.find('span',{'class':'element-label'})
+            except:
+                no_of_bedrooms = "no"
+
+            no_of_bathroom = soup.find('div',{'class':'property-info-element baths'})
+            try:
+                no_of_bathrooms = no_of_bathroom.find('span',{'class':'element-label'})
             except:
                 no_of_bathrooms="no"
-            details=soup.find_all('div', {'class':'value-block'})
+
+            # details = soup.find_all('div', {'class':'value-block'})
+            detail = soup.find("div", {"class": "listing-details-primary"})
+            details = detail.find_all('div', {'class': 'value-block'})
+
+            print("Details :", details)
             # try:
             # nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Read More')]"))).click()
             # nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/section[1]/div/div[4]/div/div/div/section/div[2]/div/div[2]/a[1]/span[1]'))).click()
 
 
-            desc=soup.find('div',{'class':'listing-details-text'})
+            desc = soup.find('div', {'class':'listing-details-text compacted'})
             print(desc.text)
 
             # feture=soup.find_all('span',{'itemprop':'name'})
@@ -176,7 +198,7 @@ try:
                         req = urllib.request.Request(x, headers={'User-Agent': '*'})
                         response = urllib.request.urlopen(req)
                         html = urllib.request.urlopen(req).read()
-                        with open('/home/yuchen/workspace/code/img'+str(image_count)+'.jpeg', 'wb') as f:
+                        with open('/home/hp/workspace/shubham/images/img'+str(image_count)+'.jpeg', 'wb') as f:
                             f.write(html)
                             image_count = image_count+1
                             count.append(image_count)
@@ -184,7 +206,7 @@ try:
                    
             #   imge = Image.open('/home/sunil/workspace/scraping/kelvin/images'+str(counts)+'.jpeg')
                 try:
-                    imge = Image.open('/home/yuchen/workspace/code/img'+str(counts)+'.jpeg')
+                    imge = Image.open('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
                
                     hight=imge.size
                     a=imge.size
@@ -196,7 +218,7 @@ try:
                     draw.rectangle([ (425,445), (900,400)], fill=260)
                     img3=im1.filter(ImageFilter.GaussianBlur(48))
                     im1.paste(img3,mask=mask)              
-                    im1.save('/home/yuchen/workspace/code/img'+str(counts)+'.jpeg')
+                    im1.save('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
 
                 except:
                     pass
@@ -223,13 +245,9 @@ try:
                 li=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[1]/div/div/div/div[1]/div/div/div/ul/div/li[2]')))
                 driver.execute_script("arguments[0].click();", li)
             except:
-
                 driver.get("https://myestate.sg/agent/listings/create")
 
-
-
             driver.get("https://myestate.sg/agent/listings/create")
-
 
             time.sleep(5)
             nexts=WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH,"//*[contains(text(),'Next')]")))
@@ -238,10 +256,10 @@ try:
             try:
                 for counts in count:
 
-                    image_path=os.path.abspath('/home/yuchen/workspace/code/img'+str(counts)+'.jpeg')
+                    image_path=os.path.abspath('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
                     lis= driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[4]/div[3]/div/input')
                     lis.send_keys(image_path)
-                    os.remove('/home/yuchen/workspace/code/img'+str(counts)+'.jpeg')
+                    os.remove('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
 
             except:
                 pass
@@ -318,10 +336,14 @@ try:
             #     except:
             #         Select(driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[5]/form/div[4]/div[4]/div/select')).select_by_value('0')
 
-            s=(details[0].text).replace('For Sale','')
+            for i in range(0, len(details)):
+                print('No.', i)
+                print(details[i])
 
-            s=(details[0].text).replace('For Sale','')
-            print(s,"ssssssssssssssssssssssss")
+            s = (details[0].text).replace('For Sale','')
+
+            # s = (details[0].text).replace('For Sale','')
+            print(s,"ssss")
             if "Fa" in s:
                 driver.find_element_by_xpath('//*[@id="react-select-2-input"]').send_keys("Fa")
                 driver.find_element_by_xpath('//*[@id="react-select-2-input"]').send_keys(Keys.ENTER)
@@ -512,27 +534,26 @@ try:
                 nexts.click()
             if "Pavilion" in feature_list:
 
-                nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Pavilion')]")))
+                nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Pavilion')]")))
                 nexts.click()
             if "Playground" in feature_list:
 
-                nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Playground')]")))
+                nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Playground')]")))
                 nexts.click()
             if "Pool Deck" in feature_list:
 
-                nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Pool Deck')]")))
+                nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Pool Deck')]")))
                 nexts.click()
             if "Swimming Pool" in feature_list:
 
-                nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Swimming Pool')]")))
+                nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Swimming Pool')]")))
                 nexts.click()
             feature_list.clear()    
-            nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[2]/div[3]/div[2]/div[5]/form/div[10]/div/button')))
+            nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[2]/div[3]/div[2]/div[5]/form/div[10]/div/button')))
 
             nexts.click()
-            nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[3]/div[2]/div/div/div[3]/div/button[2]'))).click()
+            nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[3]/div[2]/div/div/div[3]/div/button[2]'))).click()
 
-               
         # except:
         #     pass
         url_list.clear()

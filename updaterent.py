@@ -1,5 +1,6 @@
 ### Rent file
 import os
+from tarfile import HeaderError
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
@@ -23,22 +24,23 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
 import re
+from webdriver_manager.chrome import ChromeDriverManager
 
-image_count=1
-image_counts=1
-count=[1]
-urls_list=[]
-url_list=[]   #create lists to store data
-photos_list=[]
-photo_list=[]
-name_list=[]
-price_list=[]
-property_detail= []
-feature_list=[]
-desc_list=[]
-rent_urls_list=[]
-rent_url_list=[]
-
+image_count = 1
+image_counts = 1
+count = [1]
+urls_list  =[]
+url_list = []   #create lists to store data
+photos_list = []
+photo_list = []
+name_list = []
+price_list = []
+property_detail = []
+feature_list = []
+desc_list = []
+rent_urls_list = []
+rent_url_list = []
+new_rent_url_list = []
 
 try:
     driver.close()
@@ -46,7 +48,7 @@ except:
     pass
 
 try:
-    df = pd.read_csv('/home/hp/workspace/shubham/kenlvin/Accounts.csv')
+    df = pd.read_csv('/home/hp/workspace/shubham/kenlvin/Accounts1.csv')
     urls = df['Agent url'].dropna().tolist()
     emails = df['Email login'].dropna().tolist()
     passwords = df['Password'].dropna().tolist()
@@ -57,6 +59,7 @@ try:
         """
         This is rent function for the rent properties.
         """
+        print("function rent_property")
         res = driver.page_source
         soup = BeautifulSoup(res, 'html.parser')
         try:
@@ -68,32 +71,140 @@ try:
         except:
             pass
 
-    for i in range(0,len(urls)):
+    def rent_property_with_listing(url):
+        # print("url", url)
+        driver.get(url)
+        time.sleep(5)
+        driver.delete_all_cookies()
+        res = driver.page_source
+        soup = BeautifulSoup(res, "html.parser")
+        time.sleep(5)
+        try:
+            data = soup.find("div", {"class": "listing-widget-new small-listing-card"})
+            links = data.find_all("a", {"class": "nav-link"})
+            for i in links:
+                link = i.get("href")
+                if "#contact-agent" not in link:
+                    if link not in rent_url_list:
+                        rent_url_list.append(link)
+        except:
+            pass
+
+    for i in range(7, len(urls)):
             agent_url=(urls[i])
+            # print(agent_url)
             email=emails[i]
             password=passwords[i]
-            driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
+            driver = webdriver.Chrome(ChromeDriverManager().install())
+            if "market=residential&listing_type=rent#agent-listings" not in agent_url:
+                driver.get("https://www.propertyguru.com.sg/agent/raymond-lim-chee-hiang-7428" + "?market=residential&listing_type=rent#agent-listings")
+            else:
+                driver.get(agent_url) 
 
-            driver.get(agent_url)
             print(agent_url)
             driver.maximize_window()
             driver.delete_all_cookies()
+            res = driver.page_source
+            soup = BeautifulSoup(res, "html.parser")
             time.sleep(5)
 
+            # cookies button..
             try:
                 WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[2]/div/div/div[2]/div/button'))).click()
-                time.sleep(5)
+                time.sleep(5) 
             except:
-                pass 
+                pass
             
             try:
-                WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div/button[2]'))).click()
-                time.sleep(10)
-                rent_property()
+                rent_text = soup.find("button", {"data-value": "rent"})
+                print("rent_text.text", rent_text.text)
+                new_text = rent_text.text
+
             except:
                 pass
 
+            try:
+                if "For Rent" in new_text:
+                    try:
+                        view=driver.find_element(By.XPATH, '/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div[2]/a')
+                        print(view.text)
+
+                        if view.text:
+                            WebDriverWait(driver,2).until(EC.presence_of_element_located((By.XPATH,'//*[@id="agent-listings"]/div/div/div[1]/div[1]/button[2]'))).click()
+                            elems = driver.find_elements_by_css_selector(".more-link-wrapper [href]")
+                            links = [elem.get_attribute('href') for elem in elems]
+                            print(links)
+                            driver.delete_all_cookies()
+                            time.sleep(5)
+                            rent_property_with_listing(links[0])
+                    except:
+                        time.sleep(5)
+                        rent_property()
+            except:
+                pass
+            
+
+            # click on the rent button
+            # try:
+            # driver.find_element_by_class_name("btn btn-param").click()
+            # WebDriverWait(driver,2).until(EC.presence_of_element_located((By.XPATH,'//*[@id="agent-listings"]/div/div/div[1]/div[1]/button[2]'))).click()
+            # # //*[@id="agent-listings"]/div/div/div[1]/div/button[2]
+            # print("clicked 1")
+
+            # except:
+            #     pass
+                # WebDriverWait(driver,2).until(EC.presence_of_element_located((By.XPATH,'//*[@id="agent-listings"]/div/div/div[1]/div/button[2]'))).click()
+                # print("clicked 2")
+           
+            # try:
+            #     # more_property = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div[2]/a"))).click()
+            #     elems = driver.find_elements_by_css_selector(".more-link-wrapper [href]")
+            #     links = [elem.get_attribute('href') for elem in elems]
+            #     print(links)
+            #     driver.delete_all_cookies()
+            #     time.sleep(5)
+            #     rent_property_with_listing(links[0])
+            # except:
+            
+       
+
+            
+
+            # try:
+            #     driver.delete_all_cookies()
+            #     time.sleep(15)
+            #     print("rent_property")
+            #     rent_property()
+            
+            # try:agent_url
+            #     try:
+            #         WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div/button[2]'))).click()
+
+            #         try:
+            #             # time.sleep(5)
+            #             WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div[2]/a"))).click()
+            #             driver.delete_all_cookies()
+            #             time.sleep(15)
+            #             rent_property_with_listing()
+            #         except:
+            #             pass
+            #         driver.delete_all_cookies()
+            #         time.sleep(15)
+            #         rent_property()
+                    
+            #     except:
+            #         WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div/div[6]/div[5]/div/div/div[1]/div/button[2]'))).click()
+            #         time.sleep(5)
+            #         WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div[2]/a"))).click()
+
+            #         driver.delete_all_cookies()
+            #         time.sleep(15)
+            #         rent_property()
+            # except:
+            #     pass
+
             print(len(rent_url_list)) 
+            print("Link: ", rent_url_list)
     #     #############################################################################################
             driver.delete_all_cookies()
             for i in range (0,len(rent_url_list)):
@@ -125,7 +236,7 @@ try:
                     pass
                 # details = soup.find_all('div', {'class':'value-block'})
                 detail = soup.find("div", {"class": "listing-details-primary"})
-                details = detail.find_all('div', {'class': 'value-block'})
+                details = detail.find_all('td', {'class': 'value-block'})
                 desc = soup.find('div',{'class':'listing-details-text'})
             
                 fetures = soup.find('div', {'id': 'facilities'})
@@ -156,17 +267,15 @@ try:
                             req = urllib.request.Request(x, headers={'User-Agent': '*'})
                             response = urllib.request.urlopen(req)
                             html = urllib.request.urlopen(req).read()
-                            with open('/home/hp/workspace/shubham/images/img'+str(image_count)+'.jpeg', 'wb') as f:
+                            with open('/home/hp/workspace/shubham/kenlvin/images/img'+str(image_count)+'.jpeg', 'wb') as f:
                                 f.write(html)
                                 image_count = image_count+1
                                 count.append(image_count)
 
                 for counts in count:
                     try:
-                            imge = Image.open('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
-
+                            imge = Image.open('/home/hp/workspace/shubham/kenlvin/images/img'+str(counts)+'.jpeg')
                             a=imge.size
-
                             hight=imge.size
                             a=imge.size
                             newsize = (800, 600)
@@ -177,14 +286,11 @@ try:
                             draw.rectangle([ (425,445), (900,400)], fill=260)
                             img3=im1.filter(ImageFilter.GaussianBlur(48))
                             im1.paste(img3,mask=mask)              
-                            im1.save('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
+                            im1.save('/home/hp/workspace/shubham/kenlvin/images/img'+str(counts)+'.jpeg')
                                 # imge.save('/home/sunil/workspace/scraping/kelvin/images/img'+str(counts)+'.jpeg')
                     except:
                         pass
-            
-
                 driver.delete_all_cookies()
-
                 try:
                     driver.get("https://myestate.sg/agent/login")
                 except:
@@ -221,10 +327,10 @@ try:
 
                 for counts in count:
                     try:
-                        image_path=os.path.abspath('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
+                        image_path=os.path.abspath('/home/hp/workspace/shubham/kenlvin/images/img'+str(counts)+'.jpeg')
                         lis= driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[4]/div[3]/div/input')
                         lis.send_keys(image_path)
-                        os.remove('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
+                        os.remove('/home/hp/workspace/shubham/kenlvin/images/img'+str(counts)+'.jpeg')
                     except:
                         pass
 
@@ -548,11 +654,11 @@ try:
                 nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[2]/div[3]/div[2]/div[5]/form/div[10]/div/button')))
 
                 nexts.click()
-                nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[3]/div[2]/div/div/div[3]/div/button[2]'))).click()  
+                # nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[3]/div[2]/div/div/div[3]/div/button[2]'))).click()  
             
             # Remove the rent link.
             rent_url_list.clear()
-            # rent_urls_list.clear()
+            rent_urls_list.clear()
             driver.close()
 except:
     pass

@@ -9,13 +9,13 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
-import requests
+# import requests
 import time
 from selenium.webdriver.support.ui import Select
 import urllib.request
-import pytesseract
+# import pytesseract
 from PIL import Image, ImageFilter ,ImageDraw
-from pytesseract import pytesseract
+# from pytesseract import pytesseract
 import PIL
 import urllib.request
 import os
@@ -24,6 +24,8 @@ from selenium.webdriver.common.keys import Keys
 import pandas as pd
 from urllib3 import add_stderr_logger
 import re
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 image_count=1
 image_counts=1
@@ -41,7 +43,7 @@ rent_urls_list=[]
 rent_url_list=[]
 
 ############################################ code for buy ##############################################
-driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
 try:
     driver.close()
@@ -61,9 +63,10 @@ try:
         soup = BeautifulSoup(res, 'html.parser')
         try:
             data = soup.find('div', {'class': 'carousel-container'})
-            cards = data.find_all('a', {'class': 'listing-card-link'})
+            cards = data.find_all('a', {'class': 'listing-card-link listing-img-a'})
             for card in cards:
                 link = card.get('href')
+                print(link)
                 url_list.append(link)
             print("Property List :", url_list)
         except:
@@ -84,7 +87,7 @@ try:
         agent_url = (urls[i])
         email = emails[i]
         password = passwords[i]
-        driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
+        driver = webdriver.Chrome(ChromeDriverManager().install())
 
         driver.get(agent_url)
         driver.delete_all_cookies()              
@@ -97,9 +100,11 @@ try:
    
         try:
             WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div/button[1]'))).click()
-            driver.delete_all_cookies()    
+            driver.delete_all_cookies() 
+            time.sleep(10)   
             buy_property()
         except:
+            time.sleep(10)
             buy_property()
     
 
@@ -155,11 +160,12 @@ try:
             except:
                 no_of_bathrooms="no"
 
-            # details = soup.find_all('div', {'class':'value-block'})
             detail = soup.find("div", {"class": "listing-details-primary"})
-            details = detail.find_all('div', {'class': 'value-block'})
+            details = detail.find_all('td', {'class': 'value-block'})
+            for i in details:
+                print("Details : ", i.text)
 
-            print("Details :", details)
+            # print("Details :", details)
             # try:
             # nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,"//*[contains(text(),'Read More')]"))).click()
             # nexts=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/section[1]/div/div[4]/div/div/div/section/div[2]/div/div[2]/a[1]/span[1]'))).click()
@@ -552,7 +558,7 @@ try:
             nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[2]/div[3]/div[2]/div[5]/form/div[10]/div/button')))
 
             nexts.click()
-            nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[3]/div[2]/div/div/div[3]/div/button[2]'))).click()
+            # nexts = WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[3]/div[2]/div/div/div[3]/div/button[2]'))).click()
 
         # except:
         #     pass

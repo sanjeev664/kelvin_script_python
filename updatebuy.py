@@ -9,13 +9,13 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
-import requests
+# import requests
 import time
 from selenium.webdriver.support.ui import Select
 import urllib.request
-import pytesseract
+# import pytesseract
 from PIL import Image, ImageFilter ,ImageDraw
-from pytesseract import pytesseract
+# from pytesseract import pytesseract
 import PIL
 import urllib.request
 import os
@@ -40,7 +40,7 @@ desc_list=[]
 rent_urls_list=[]
 rent_url_list=[]
 
-####################### code for buy ######################
+############################################ code for buy ##############################################
 driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
 
 try:
@@ -49,10 +49,10 @@ except:
     pass
 
 try:    
-    df = pd.read_csv('/home/hp/workspace/shubham/kenlvin/Accounts.csv')
-    urls = df['Agent url'].dropna().tolist()
-    emails = df['Email login'].dropna().tolist()
-    passwords = df['Password'].dropna().tolist()
+    df=pd.read_csv('/home/hp/workspace/shubham/kenlvin/Accounts1.csv')
+    urls=df['Agent url'].dropna().tolist()
+    emails=df['Email login'].dropna().tolist()
+    passwords=df['Password'].dropna().tolist()
     url_list.clear()
     urls_list.clear()
 
@@ -60,18 +60,62 @@ try:
         res = driver.page_source
         soup = BeautifulSoup(res, 'html.parser')
         try:
-            data = soup.find('div', {'class': 'carousel slide carousel-listing-cards'})
+            data = soup.find('div', {'class': 'carousel-container'})
             cards = data.find_all('a', {'class': 'listing-card-link listing-img-a'})
             for card in cards:
                 link = card.get('href')
                 print(link)
                 url_list.append(link)
+            # print("Property List :", url_list)
         except:
             pass
+    
+    def sale_property_with_listing(links):
+        # print("url", url)
+        driver.get(links)
+        time.sleep(5)
+        driver.delete_all_cookies()
+        res = driver.page_source
+        soup = BeautifulSoup(res, "html.parser")
+        time.sleep(5)
+        try:
+            data = soup.find("div", {"class": "listing-widget-new small-listing-card"})
+            links = data.find_all("a", {"class": "nav-link"})
+            for i in links:
+                link = i.get("href")
+                if "#contact-agent" not in link:
+                    if link not in url_list:
+                        url_list.append(link)
+            print(len(url_list))
+            print(url_list)
+
+            # try:
+                # time.sleep(5)
+            
+            # except:
+            #     pass
+
+        except:
+            pass
+        # try: 
+        button = WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.XPATH('//*[@id="search-results-container"]/div[2]/div[1]/div[2]/div[2]/section/div[5]/ul/li[4]/a'))))
+        if button.click():
+
+            print("cliked")
+        time.sleep(10)
+        driver.delete_all_cookies()
+        res = driver.page_source
+        soup = BeautifulSoup(res, "html.parser")
+        data = soup.find("div", {"class": "listing-widget-new small-listing-card"})
+        links = data.find_all("a", {"class": "nav-link"})
+        for i in links:
+            link = i.get("href")
+            if "#contact-agent" not in link:
+                if link not in url_list:
+                    url_list.append(link)
 
     for i in range(0, len(urls)):
         agent_url = (urls[i])
-        print(agent_url)
         email = emails[i]
         password = passwords[i]
         driver = webdriver.Chrome('/home/hp/workspace/shubham/chromedriver')
@@ -84,19 +128,41 @@ try:
             WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[2]/div/div/div[2]/div/button'))).click()
         except:
             pass
+
+        res = driver.page_source
+
+        soup = BeautifulSoup(res, 'html.parser')
    
+        try:
+            WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div/button[1]'))).click()
+            driver.delete_all_cookies() 
+            time.sleep(10)   
+            buy_property()
+        except:
+            pass
+        
+        sale_count = soup.find("span", {"data-automation-id": "stat-listings-for-sale"})
+
+        print("Count sale :", sale_count.text)
+        # data-automation-id="stat-listings-for-sale"
+
+        if int(sale_count.text) > 0:
+            elems = driver.find_elements_by_css_selector(".more-link-wrapper [href]")
+            links = [elem.get_attribute('href') for elem in elems]
+            print("Link for the more poperr ur rir ", links)
+            time.sleep(5)
+            sale_property_with_listing(links[0])
+
         # try:
-        #     WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[6]/div[6]/div/div/div[1]/div/button[1]'))).click()
-        #     driver.delete_all_cookies() 
-        #     time.sleep(5)
+        #     WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[2]/div/div/div[5]/div/div/section/div[8]/div[3]/ul/li[4]/a'))).click()
         #     buy_property()
         # except:
-        time.sleep(10)
-        buy_property()
-        print(len(url_list))
+        #     pass
 
         ################################################################################################################          
         driver.delete_all_cookies()              
+
+
         for i in range(0,len(url_list)):        
         # for i in range(0,1):        
             driver.delete_all_cookies()
@@ -104,7 +170,7 @@ try:
             if "commercialguru.com.sg" in u:
 
                 s = u.replace('https://www.propertyguru.com.sg/','')
-                driver.get(s)
+                driver.get("https://www.propertyguru.com.sg/listing/23603697/for-sale-brand-new-3-5sty-9bdrms-lift-pool-walk-to-mrt-designer-decor")
                 # print(s)
                 driver.delete_all_cookies()  
                
@@ -120,7 +186,7 @@ try:
             postalCode = address.find('span',{'itemprop': 'postalCode'}).text
 
             name = soup.find('div', {'class': 'listing-title text-transform-none'})
-            # print(name.text)
+            print(name.text)
             name_list.append(name)
        
             price = soup.find('span', {'class': 'element-label price'})
@@ -141,7 +207,7 @@ try:
 
             # details = soup.find_all('div', {'class':'value-block'})
             detail = soup.find("div", {"class": "listing-details-primary"})
-            details = detail.find_all('div', {'class': 'value-block'})
+            details = detail.find_all('td', {'class': 'value-block'})
 
             # print("Details :", details)
             # try:
@@ -150,7 +216,7 @@ try:
 
 
             desc = soup.find('div', {'class':'listing-details-text compacted'})
-            # print(desc.text)
+            print(desc.text)
 
             # feture=soup.find_all('span',{'itemprop':'name'})
             # for feture in feture:
@@ -226,10 +292,8 @@ try:
             try:
                 el=WebDriverWait(driver,2).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[1]/div/div/div/div[1]/div/button[2]')))
                 driver.execute_script("arguments[0].click();", el)
-
                 li=WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'/html/body/div[1]/div[1]/div/div/div/div[1]/div/div/div/ul/div/li[2]')))
                 driver.execute_script("arguments[0].click();", li)
-
             except:
                 driver.get("https://myestate.sg/agent/listings/create")
 
@@ -242,8 +306,8 @@ try:
             try:
                 for counts in count:
 
-                    image_path = os.path.abspath('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
-                    lis = driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[4]/div[3]/div/input')
+                    image_path=os.path.abspath('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
+                    lis= driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[4]/div[3]/div/input')
                     lis.send_keys(image_path)
                     os.remove('/home/hp/workspace/shubham/images/img'+str(counts)+'.jpeg')
 
@@ -256,9 +320,12 @@ try:
             nexts=WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH,"//*[contains(text(),'Next')]")))
             # try:
             try:
+               
                 driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[5]/form/div[1]/div[1]/div/input').send_keys(int(postalCode))
+           
             except:
                 driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[5]/form/div[1]/div[1]/div/input').send_keys('tam')
+               
             time.sleep(10)
             try:
                 ela=WebDriverWait(driver,2).until(EC.element_to_be_clickable((By.XPATH,'//*[@id="app"]/div[2]/div[3]/div[2]/div[5]/form/div[1]/div[1]/div/ul/li')))
@@ -318,6 +385,10 @@ try:
             #         Select(driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[5]/form/div[4]/div[4]/div/select')).select_by_value(no_of_bathrooms.text)
             #     except:
             #         Select(driver.find_element_by_xpath('//*[@id="app"]/div[2]/div[3]/div[2]/div[5]/form/div[4]/div[4]/div/select')).select_by_value('0')
+
+            for i in range(0, len(details)):
+                print('No.', i)
+                print(details[i])
 
             s = (details[0].text).replace('For Sale','')
 
